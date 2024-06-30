@@ -6,6 +6,20 @@
     "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
 }
 
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 16px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(17, 25, 40, 0.5);
+}
+
 body {
   height: 100vh;
   display: flex;
@@ -25,16 +39,10 @@ body {
   display: flex;
 }
 
-::-webkit-scrollbar {
-  width: 5px;
-}
-::-webkit-scrollbar-track {
-  background-color: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  border-radius: 16px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(17, 25, 40, 0.5);
+.loading {
+  padding: 50px;
+  font-size: 40px;
+  font-weight: 500;
+  border-radius: 10px;
+  background-color: rgba(17, 25, 40, 0.9);
 }
