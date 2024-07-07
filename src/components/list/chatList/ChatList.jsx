@@ -4,11 +4,13 @@ import AddUser from "../../addUser/AddUser";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../../lib/Firebase";
 import { useUserStore } from "../../lib/UserStore";
+import { useChatStore } from "../../lib/chatStore";
 
 const ChatList = () => {
   const [chats, setChats] = useState([]);
   const [addMode, setAddMode] = useState(false);
   const { currentUser } = useUserStore();
+  const { changeChat } = useChatStore();
 
   useEffect(() => {
     const unSub = onSnapshot(
@@ -31,7 +33,11 @@ const ChatList = () => {
     );
 
     return () => unSub();
-  }, [currentUser.id]);
+  }, [currentUser?.id]);
+
+  const handleSelect = async (chat) => {
+    changeChat(chat.chatId, chat.user);
+  };
 
   return (
     <div className="chatList">
@@ -53,6 +59,7 @@ const ChatList = () => {
             className="item"
             key={chat.chatId}
             onClick={() => handleSelect(chat)}
+            style={{ backgroundColor: chat.isSeen ? "transparent" : "#5183fe" }}
           >
             <img src={chat.user.avatar || "avatar.png"} alt="avatar" />
             <div className="text">

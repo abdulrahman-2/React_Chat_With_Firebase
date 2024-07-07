@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import "./Chat.css";
 import EmojiPicker from "emoji-picker-react";
-import { doc, onSnapshot } from "firebase/firestore";
+import {
+  arrayUnion,
+  doc,
+  getDoc,
+  onSnapshot,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../lib/Firebase";
+import { useChatStore } from "../lib/chatStore";
+import { useUserStore } from "../lib/UserStore";
 
 const Chat = () => {
   const [chat, setChat] = useState("");
   const [openEmoji, setOpenEmoji] = useState(false);
   const [text, setText] = useState("");
+  const { chatId, user } = useChatStore();
+  const { currentUser } = useUserStore();
 
   const handleEmoji = (e) => {
     setText((prev) => prev + e.emoji);
@@ -21,15 +31,52 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    const unSub = onSnapshot(
-      doc(db, "chats", "5RJ4sk1AIQSwOOR7GGts"),
-      (res) => {
-        setChat(res.data());
-      }
-    );
+    const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
+      setChat(res.data());
+    });
 
     return () => unSub();
-  }, []);
+  }, [chatId]);
+
+  const handleSend = async () => {
+    if (text === "") return;
+
+    try {
+      await updateDoc(doc(db, "chats", chatId), {
+        messages: arrayUnion({
+          sanderId: currentUser.id,
+          text,
+          createdAt: new Date(),
+        }),
+      });
+
+      const userIds = [currentUser.id, user.id];
+
+      userIds.forEach(async (id) => {
+        const userChatRef = doc(db, "userChats", id);
+        const userChatsSnapshot = await getDoc(userChatRef);
+
+        if (userChatsSnapshot.exists()) {
+          const userChatsData = userChatsSnapshot.data();
+
+          const chatIndex = userChatsData.chats.findIndex(
+            (c) => c.chatId === chatId
+          );
+          if (chatIndex !== -1) {
+            userChatsData.chats[chatIndex].lastMessage = text;
+            userChatsData.chats[chatIndex].isSeen = id === currentUser.id;
+            userChatsData.chats[chatIndex].updatedAt = Date.now();
+
+            await updateDoc(userChatRef, {
+              chats: userChatsData.chats,
+            });
+          }
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <div className="chat">
@@ -49,91 +96,15 @@ const Chat = () => {
       </div>
       <div className="center">
         <div className="messages">
-          <div className="message">
-            <img src="avatar.png" alt="" />
-            <div className="text">
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
+          {chat?.messages?.map((message) => (
+            <div className="own-message" key={message?.createdAt}>
+              <div className="text">
+                {message.img && <img src={message.img} alt="message" />}
+                <p>{message.text}</p>
+                <span>1 minute ago</span>
+              </div>
             </div>
-          </div>
-          <div className="own-message">
-            <div className="text">
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
-            </div>
-          </div>
-          <div className="message">
-            <img src="avatar.png" alt="" />
-            <div className="text">
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
-            </div>
-          </div>
-          <div className="own-message">
-            <div className="text">
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
-            </div>
-          </div>
-          <div className="message">
-            <img src="avatar.png" alt="" />
-            <div className="text">
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
-            </div>
-          </div>
-          <div className="own-message">
-            <div className="text">
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
-            </div>
-          </div>
-          <div className="message">
-            <img src="avatar.png" alt="" />
-            <div className="text">
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
-            </div>
-          </div>
-          <div className="own-message">
-            <div className="text">
-              <img src="theme.png" alt="" />
-              <p>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quia
-                magni tempora explicabo nostrum optio molestiae odio ullam
-                assumenda.
-              </p>
-              <span>1 minute ago</span>
-            </div>
-          </div>
+          ))}
         </div>
         <div ref={endRef}></div>
       </div>
@@ -159,7 +130,7 @@ const Chat = () => {
             {openEmoji && <EmojiPicker onEmojiClick={handleEmoji} />}
           </div>
         </div>
-        <img src="send.png" alt="send" className="send" />
+        <img src="send.png" alt="send" className="send" onClick={handleSend} />
       </div>
     </div>
   );
