@@ -11,17 +11,30 @@ import {
 import { db } from "../lib/Firebase";
 import { useChatStore } from "../lib/chatStore";
 import { useUserStore } from "../lib/UserStore";
+import Upload from "../lib/Upload";
 
 const Chat = () => {
   const [chat, setChat] = useState("");
   const [openEmoji, setOpenEmoji] = useState(false);
   const [text, setText] = useState("");
+  const [img, setImg] = useState({
+    file: null,
+    url: "",
+  });
   const { chatId, user } = useChatStore();
   const { currentUser } = useUserStore();
 
   const handleEmoji = (e) => {
     setText((prev) => prev + e.emoji);
     setOpenEmoji(false);
+  };
+
+  const handleImg = (e) => {
+    if (e.target.files[0])
+      setImg({
+        file: e.target.files[0],
+        url: URL.createObjectURL(e.target.files[0]),
+      });
   };
 
   const endRef = useRef(null);
@@ -41,12 +54,19 @@ const Chat = () => {
   const handleSend = async () => {
     if (text === "") return;
 
+    let imgUrl = null;
+
     try {
+      if (img.file) {
+        imgUrl = await Upload(img.file);
+      }
+
       await updateDoc(doc(db, "chats", chatId), {
         messages: arrayUnion({
           sanderId: currentUser.id,
           text,
           createdAt: new Date(),
+          ...(imgUrl && { img: imgUrl }),
         }),
       });
 
@@ -73,6 +93,8 @@ const Chat = () => {
           }
         }
       });
+      setImg({ file: null, url: "" });
+      setText("");
     } catch (err) {
       console.log(err);
     }
@@ -97,7 +119,12 @@ const Chat = () => {
       <div className="center">
         <div className="messages">
           {chat?.messages?.map((message) => (
-            <div className="own-message" key={message?.createdAt}>
+            <div
+              className={
+                message.senderId === currentUser?.id ? "own-message" : "message"
+              }
+              key={message?.createdAt}
+            >
               <div className="text">
                 {message.img && <img src={message.img} alt="message" />}
                 <p>{message.text}</p>
@@ -105,12 +132,28 @@ const Chat = () => {
               </div>
             </div>
           ))}
+          {img.url && (
+            <div className="own-message">
+              <div className="text">
+                <img src={img.url} alt="" />
+              </div>
+            </div>
+          )}
         </div>
         <div ref={endRef}></div>
       </div>
       <div className="bottom">
         <div className="icons">
-          <img src="img.png" alt="" />
+          <label htmlFor="file">
+            <img src="img.png" alt="" />
+          </label>
+          <input
+            type="file"
+            name="file"
+            id="file"
+            style={{ display: "none" }}
+            onChange={handleImg}
+          />
           <img src="camera.png" alt="" />
           <img src="mic.png" alt="" />
         </div>

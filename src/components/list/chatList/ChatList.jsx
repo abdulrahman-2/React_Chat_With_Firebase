@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./ChatList.css";
 import AddUser from "../../addUser/AddUser";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../../lib/Firebase";
 import { useUserStore } from "../../lib/UserStore";
 import { useChatStore } from "../../lib/chatStore";
@@ -36,7 +36,30 @@ const ChatList = () => {
   }, [currentUser?.id]);
 
   const handleSelect = async (chat) => {
-    changeChat(chat.chatId, chat.user);
+    const userChats = chats.map((item) => {
+      const { user, ...rest } = item;
+      return rest;
+    });
+
+    const chatIndex = userChats.findIndex(
+      (item) => item.chatId === chat.chatId
+    ); // Corrected the comparison
+
+    if (chatIndex !== -1) {
+      // Added a check to ensure chatIndex is valid
+      userChats[chatIndex].isSeen = true;
+
+      const userChatsRef = doc(db, "userChats", currentUser.id);
+
+      try {
+        await updateDoc(userChatsRef, {
+          chats: userChats,
+        });
+        changeChat(chat.chatId, chat.user);
+      } catch (err) {
+        console.log(err);
+      }
+    }
   };
 
   return (
