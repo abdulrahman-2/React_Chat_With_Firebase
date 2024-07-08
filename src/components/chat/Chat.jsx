@@ -116,16 +116,16 @@ const Chat = () => {
     <div className="chat">
       <div className="top">
         <div className="user">
-          <img src={user?.avatar || "avatar.png"} alt="" />
+          <img src={user?.avatar || "./avatar.png"} alt="" />
           <div className="text">
             <span>{user?.username}</span>
             <p>I'm FrontEnd Developer</p>
           </div>
         </div>
         <div className="icons">
-          <img src="phone.png" alt="" />
-          <img src="video.png" alt="" />
-          <img src="info.png" alt="" />
+          <img src="./phone.png" alt="" />
+          <img src="./video.png" alt="" />
+          <img src="./info.png" alt="" />
         </div>
       </div>
       <div className="center">
@@ -157,7 +157,7 @@ const Chat = () => {
       <div className="bottom">
         <div className="icons">
           <label htmlFor="file">
-            <img src="img.png" alt="" />
+            <img src="./img.png" alt="" />
           </label>
           <input
             type="file"
@@ -168,12 +168,12 @@ const Chat = () => {
             disabled={isReceiverBlocked || isCurrentUserBlocked}
           />
           <img
-            src="camera.png"
+            src="./camera.png"
             alt=""
             disabled={isReceiverBlocked || isCurrentUserBlocked}
           />
           <img
-            src="mic.png"
+            src="./mic.png"
             alt=""
             disabled={isReceiverBlocked || isCurrentUserBlocked}
           />
@@ -191,7 +191,7 @@ const Chat = () => {
         />
         <div className="emoji">
           <img
-            src="emoji.png"
+            src="./emoji.png"
             alt=""
             onClick={() => setOpenEmoji((prev) => !prev)}
           />
@@ -200,7 +200,7 @@ const Chat = () => {
           </div>
         </div>
         <img
-          src="send.png"
+          src="./send.png"
           alt="send"
           className="send"
           onClick={handleSend}

@@ -54,7 +54,7 @@ const Detail = () => {
   return (
     <div className="detail">
       <div className="user">
-        <img src={user?.avatar || "avatar.png"} alt="" />
+        <img src={user?.avatar || "./avatar.png"} alt="" />
         <h2>{user?.username}</h2>
         <p>I'm FrontEnd Developer</p>
       </div>
@@ -62,19 +62,19 @@ const Detail = () => {
         <div className="option">
           <div className="title">
             <span>Chat Setting</span>
-            <img src="arrowUp.png" alt="" />
+            <img src="./arrowUp.png" alt="" />
           </div>
         </div>
         <div className="option">
           <div className="title">
             <span>Privacy & Help</span>
-            <img src="arrowUp.png" alt="" />
+            <img src="./arrowUp.png" alt="" />
           </div>
         </div>
         <div className="option">
           <div className="title">
             <span>Shared Photo</span>
-            <img src="arrowDown.png" alt="" />
+            <img src="./arrowDown.png" alt="" />
           </div>
           <div className="photos">
             {sharedPhotos.map((photo, index) => (
@@ -83,7 +83,11 @@ const Detail = () => {
                   <img src={photo.img} alt={`shared-${index}`} />
                   <span>{photo.text}</span>
                 </div>
-                <img src="download.png" alt="download" className="deleteIcon" />
+                <img
+                  src="./download.png"
+                  alt="download"
+                  className="deleteIcon"
+                />
               </div>
             ))}
           </div>
@@ -92,7 +96,7 @@ const Detail = () => {
         <div className="option">
           <div className="title">
             <span>Shared File</span>
-            <img src="arrowDown.png" alt="" />
+            <img src="./arrowDown.png" alt="" />
           </div>
         </div>
         <button onClick={handleBlock}>
