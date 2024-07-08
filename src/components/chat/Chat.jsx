@@ -21,7 +21,8 @@ const Chat = () => {
     file: null,
     url: "",
   });
-  const { chatId, user } = useChatStore();
+  const { chatId, user, isCurrentUserBlocked, isReceiverBlocked } =
+    useChatStore();
   const { currentUser } = useUserStore();
 
   const handleEmoji = (e) => {
@@ -39,16 +40,23 @@ const Chat = () => {
 
   const endRef = useRef(null);
 
+  // Scroll to the bottom whenever messages change
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+    if (endRef.current) {
+      endRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chat?.messages]);
 
+  // Set up the onSnapshot listener for the chat document
   useEffect(() => {
-    const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
-      setChat(res.data());
-    });
+    if (chatId) {
+      const unSub = onSnapshot(doc(db, "chats", chatId), (res) => {
+        setChat(res.data());
+      });
 
-    return () => unSub();
+      // Clean up the listener on unmount
+      return () => unSub();
+    }
   }, [chatId]);
 
   const handleSend = async () => {
@@ -57,21 +65,24 @@ const Chat = () => {
     let imgUrl = null;
 
     try {
+      // Upload image if there is one
       if (img.file) {
         imgUrl = await Upload(img.file);
       }
 
+      // Update the chat document with the new message
       await updateDoc(doc(db, "chats", chatId), {
         messages: arrayUnion({
-          sanderId: currentUser.id,
+          senderId: currentUser.id,
           text,
           createdAt: new Date(),
-          ...(imgUrl && { img: imgUrl }),
+          ...(imgUrl && { img: imgUrl }), // Conditionally include img if imgUrl is set
         }),
       });
 
       const userIds = [currentUser.id, user.id];
 
+      // Update the userChats for both users
       userIds.forEach(async (id) => {
         const userChatRef = doc(db, "userChats", id);
         const userChatsSnapshot = await getDoc(userChatRef);
@@ -93,6 +104,7 @@ const Chat = () => {
           }
         }
       });
+
       setImg({ file: null, url: "" });
       setText("");
     } catch (err) {
@@ -104,10 +116,10 @@ const Chat = () => {
     <div className="chat">
       <div className="top">
         <div className="user">
-          <img src="avatar.png" alt="" />
+          <img src={user?.avatar || "avatar.png"} alt="" />
           <div className="text">
-            <span>John Doe</span>
-            <p>I'm FullStack Developer</p>
+            <span>{user?.username}</span>
+            <p>I'm FrontEnd Developer</p>
           </div>
         </div>
         <div className="icons">
@@ -153,15 +165,29 @@ const Chat = () => {
             id="file"
             style={{ display: "none" }}
             onChange={handleImg}
+            disabled={isReceiverBlocked || isCurrentUserBlocked}
           />
-          <img src="camera.png" alt="" />
-          <img src="mic.png" alt="" />
+          <img
+            src="camera.png"
+            alt=""
+            disabled={isReceiverBlocked || isCurrentUserBlocked}
+          />
+          <img
+            src="mic.png"
+            alt=""
+            disabled={isReceiverBlocked || isCurrentUserBlocked}
+          />
         </div>
         <input
           type="text"
           value={text}
-          placeholder="Type Your Massage..."
+          placeholder={
+            isReceiverBlocked || isCurrentUserBlocked
+              ? "You cannot send a message"
+              : "Type Your Massage..."
+          }
           onChange={(e) => setText(e.target.value)}
+          disabled={isReceiverBlocked || isCurrentUserBlocked}
         />
         <div className="emoji">
           <img
@@ -173,7 +199,20 @@ const Chat = () => {
             {openEmoji && <EmojiPicker onEmojiClick={handleEmoji} />}
           </div>
         </div>
-        <img src="send.png" alt="send" className="send" onClick={handleSend} />
+        <img
+          src="send.png"
+          alt="send"
+          className="send"
+          onClick={handleSend}
+          disabled={isReceiverBlocked || isCurrentUserBlocked}
+          style={{
+            cursor:
+              isReceiverBlocked || isCurrentUserBlocked
+                ? "not-allowed"
+                : "pointer",
+            opacity: isReceiverBlocked || isCurrentUserBlocked ? 0.5 : 1,
+          }}
+        />
       </div>
     </div>
   );
